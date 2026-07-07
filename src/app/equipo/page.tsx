@@ -3,6 +3,8 @@ import { getEquipoCierreContent } from "@/lib/firebase/content";
 import EquipoFromCms from "@/components/EquipoFromCms";
 import EquipoStatic from "@/components/EquipoStatic";
 
+export const revalidate = 300;
+
 export default async function EquipoPage() {
   const [members, cierre] = await Promise.all([
     getTeamMembers().catch(() => []),

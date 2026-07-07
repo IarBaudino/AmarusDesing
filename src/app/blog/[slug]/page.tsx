@@ -5,6 +5,8 @@ import { ArrowLeft, Calendar } from "lucide-react";
 import { getBlogPostBySlug } from "@/lib/firebase/blog";
 import { getCloudinaryUrl, isDirectMediaUrl } from "@/lib/cloudinary";
 
+export const revalidate = 300;
+
 export async function generateMetadata({
   params,
 }: {

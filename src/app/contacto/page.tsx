@@ -2,6 +2,8 @@ import { getSiteConfig } from "@/lib/firebase/site-config";
 import { getContactoContent } from "@/lib/firebase/content";
 import ContactoClient from "@/components/ContactoClient";
 
+export const revalidate = 300;
+
 export default async function ContactoPage() {
   const [config, content] = await Promise.all([
     getSiteConfig().catch(() => null),

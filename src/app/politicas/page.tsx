@@ -5,6 +5,8 @@ import { FileText, Package, RefreshCw, ShieldCheck } from "lucide-react";
 
 const sectionIcons = [Package, RefreshCw, ShieldCheck, FileText];
 
+export const revalidate = 300;
+
 export default async function PoliticasPage() {
   const content = await getPoliticasContent().catch(() => null);
 

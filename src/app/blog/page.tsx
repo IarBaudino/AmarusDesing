@@ -12,6 +12,8 @@ export const metadata = {
     "Descubre historias, novedades y consejos sobre joyería artesanal, minerales y macramé.",
 };
 
+export const revalidate = 300;
+
 export default async function BlogPage() {
   let posts: BlogPost[] = [];
   try {
