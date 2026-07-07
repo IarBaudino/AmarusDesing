@@ -111,7 +111,9 @@ export default function AdminProductosPage() {
     }
 
     if (categoryFilter) {
-      filtered = filtered.filter((p) => p.category === categoryFilter);
+      filtered = filtered.filter(
+        (p) => p.category === categoryFilter || p.subcategory === categoryFilter
+      );
     }
 
     if (statusFilter === "active") {

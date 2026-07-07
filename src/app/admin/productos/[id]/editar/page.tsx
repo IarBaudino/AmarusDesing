@@ -633,23 +633,13 @@ export default function EditarProductoPage() {
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-xs text-gray-500">
-              Solo se guarda el <strong>slug</strong> de la subcategoría (el mismo que en Admin → Categorías). El desplegable muestra el nombre para evitar errores.
-            </p>
             {selectedCategory && subcategories.length > 0 && watchedSubcategory?.trim()
               ? (() => {
                   const hit = matchSubcategoryToAllowedList(
                     watchedSubcategory,
                     subcategories
                   );
-                  return hit ? (
-                    <p className="mt-1 text-xs text-gray-600">
-                      Slug que se usará en la tienda:{" "}
-                      <code className="rounded bg-gray-100 px-1 py-0.5 text-[11px]">
-                        {hit.slug}
-                      </code>
-                    </p>
-                  ) : (
+                  return hit ? null : (
                     <p className="mt-1 text-xs text-amber-800">
                       Este valor no coincide con ninguna subcategoría de la categoría actual. Elige una del listado o “Sin subcategoría”.
                     </p>

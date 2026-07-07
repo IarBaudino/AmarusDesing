@@ -3,6 +3,7 @@
 import { getAuthHeaders } from "@/lib/auth-headers";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { compressVideoForWeb } from "@/lib/storage/compress-video-client";
+import { compressImageInBrowser } from "@/lib/storage/compress-image-client";
 
 export type AdminUploadResult = {
   success: boolean;
@@ -89,15 +90,28 @@ export async function uploadAdminMedia(
       }),
     });
     const signText = await signRes.text();
-    const signData = JSON.parse(signText) as {
+    let signData: {
       path?: string;
       token?: string;
       publicId?: string;
       url?: string;
       message?: string;
-    };
-    if (!signRes.ok || !signData.path || !signData.token) {
-      throw new Error(signData.message || "No se pudo preparar la subida del video");
+    } | null = null;
+    try {
+      signData = signText ? JSON.parse(signText) : null;
+    } catch {
+      signData = null;
+    }
+    if (!signRes.ok || !signData?.path || !signData?.token) {
+      if (signRes.status === 413) {
+        throw new Error(
+          "El vídeo es demasiado grande para prepararlo. Usa un clip más corto o más ligero."
+        );
+      }
+      throw new Error(
+        signData?.message ||
+          `No se pudo preparar la subida del video (error ${signRes.status}).`
+      );
     }
     const supabase = getSupabaseBrowser();
     const { error } = await supabase.storage
@@ -123,22 +137,49 @@ export async function uploadAdminMedia(
   if (file.size > IMAGE_SERVER_MAX) {
     throw new Error("La imagen no puede ser mayor a 5MB");
   }
+
+  onProgress?.({
+    phase: "compressing",
+    message: "Optimizando imagen…",
+  });
+
+  let uploadFile = file;
+  try {
+    uploadFile = await compressImageInBrowser(file);
+  } catch {
+    uploadFile = file;
+  }
+
   onProgress?.({
     phase: "uploading",
     message: "Subiendo imagen…",
   });
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", uploadFile);
   formData.append("folder", folder);
   const res = await fetch("/api/upload-image", {
     method: "POST",
     headers: await getAuthHeaders(),
     body: formData,
   });
+
   const text = await res.text();
-  const data = JSON.parse(text) as AdminUploadResult & { message?: string };
-  if (!res.ok || !data.success) {
-    throw new Error(data.message || "Error al subir el archivo");
+  let data: (AdminUploadResult & { message?: string }) | null = null;
+  try {
+    data = text ? (JSON.parse(text) as AdminUploadResult & { message?: string }) : null;
+  } catch {
+    data = null;
+  }
+
+  if (!res.ok || !data || !data.success) {
+    if (res.status === 413) {
+      throw new Error(
+        "La imagen es demasiado grande para subirla. Prueba con una foto más ligera o reduce su tamaño."
+      );
+    }
+    throw new Error(
+      data?.message || `No se pudo subir la imagen (error ${res.status}).`
+    );
   }
   return data;
 }
