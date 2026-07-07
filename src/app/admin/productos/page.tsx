@@ -242,7 +242,11 @@ export default function AdminProductosPage() {
       await reloadProductsList();
     } catch (err) {
       console.error("Error eliminando producto:", err);
-      alert("Error al eliminar el producto");
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "Error al eliminar el producto";
+      alert(message);
     }
   };
 
