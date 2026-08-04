@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getProductByIdServer } from "@/lib/firebase/products-server";
 import { getProductById } from "@/lib/firebase/products";
 import { buildTitle, getBaseUrl } from "@/lib/seo";
 
@@ -6,7 +7,10 @@ type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const product = await getProductById(id);
+  let product = await getProductByIdServer(id).catch(() => null);
+  if (!product) {
+    product = await getProductById(id).catch(() => null);
+  }
   if (!product) return { title: buildTitle("Producto no encontrado") };
 
   const title = product.seo?.title || product.name;
