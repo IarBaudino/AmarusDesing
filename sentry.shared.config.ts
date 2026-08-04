@@ -18,5 +18,11 @@ export function getSentryBaseOptions() {
     environment: getSentryEnvironment(),
     tracesSampleRate: 0.1,
     sendDefaultPii: false,
+    // Ruido de apps (Instagram/Facebook in-app browser) y cortes de red puntuales
+    ignoreErrors: [
+      /webkit\.messageHandlers/i,
+      "Failed to get document because the client is offline",
+      /Could not reach Cloud Firestore backend/i,
+    ],
   };
 }

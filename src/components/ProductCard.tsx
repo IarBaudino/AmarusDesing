@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { ShoppingCart, Heart, Check } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import {
@@ -77,13 +76,7 @@ export default function ProductCard({
     : "/images/placeholder.jpg";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.4 }}
-      className="group h-full"
-    >
+    <div className="group h-full">
       <article className="flex h-full flex-col overflow-hidden rounded-lg bg-white shadow-md touch-manipulation">
         <Link
           href={`/productos/${product.id}`}
@@ -201,6 +194,6 @@ export default function ProductCard({
           </div>
         )}
       </article>
-    </motion.div>
+    </div>
   );
 }

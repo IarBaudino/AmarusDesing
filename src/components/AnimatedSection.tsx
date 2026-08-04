@@ -16,17 +16,17 @@ const AnimatedSection = ({
   className = "",
   delay = 0,
   direction = "up",
-  duration = 0.6,
+  duration = 0.45,
 }: AnimatedSectionProps) => {
   const directionVariants = {
-    up: { y: 60, opacity: 0 },
-    down: { y: -60, opacity: 0 },
-    left: { x: 60, opacity: 0 },
-    right: { x: -60, opacity: 0 },
+    up: { y: 24 },
+    down: { y: -24 },
+    left: { x: 24 },
+    right: { x: -24 },
   };
 
   const animateVariants: Variants = {
-    hidden: directionVariants[direction],
+    hidden: { ...directionVariants[direction], opacity: 1 },
     visible: {
       y: 0,
       x: 0,
@@ -34,7 +34,7 @@ const AnimatedSection = ({
       transition: {
         duration,
         delay,
-        ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number], // Custom easing
+        ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number],
       },
     },
   };
@@ -42,8 +42,7 @@ const AnimatedSection = ({
   return (
     <motion.div
       initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-100px" }}
+      animate="visible"
       variants={animateVariants}
       className={className}
     >
@@ -53,4 +52,3 @@ const AnimatedSection = ({
 };
 
 export default AnimatedSection;
-

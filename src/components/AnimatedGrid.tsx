@@ -9,13 +9,18 @@ interface AnimatedGridProps {
   staggerDelay?: number;
 }
 
+/**
+ * Animación al montar (no whileInView).
+ * whileInView + opacity:0 deja el listado invisible en Instagram/WebViews de iOS
+ * cuando IntersectionObserver falla — la clienta ve "página en blanco".
+ */
 const AnimatedGrid = ({
   children,
   className = "",
   staggerDelay = 0.1,
 }: AnimatedGridProps) => {
   const containerVariants: Variants = {
-    hidden: { opacity: 0 },
+    hidden: { opacity: 1 },
     visible: {
       opacity: 1,
       transition: {
@@ -27,16 +32,14 @@ const AnimatedGrid = ({
 
   const itemVariants: Variants = {
     hidden: {
-      y: 20,
-      opacity: 0,
-      scale: 0.95,
+      y: 12,
+      opacity: 1,
     },
     visible: {
       y: 0,
       opacity: 1,
-      scale: 1,
       transition: {
-        duration: 0.3,
+        duration: 0.25,
         ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number],
       },
     },
@@ -47,8 +50,7 @@ const AnimatedGrid = ({
       className={className}
       variants={containerVariants}
       initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-100px" }}
+      animate="visible"
     >
       {Array.isArray(children) ? (
         children.map((child, index) => (
@@ -64,4 +66,3 @@ const AnimatedGrid = ({
 };
 
 export default AnimatedGrid;
-

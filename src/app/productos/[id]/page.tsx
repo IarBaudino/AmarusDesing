@@ -15,13 +15,11 @@ import {
   Ruler,
   Weight,
   User,
-  ArrowLeft,
   Check,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
-import { getProductById, getProductsByCategory } from "@/lib/firebase/products";
+import { getProductById } from "@/lib/firebase/products";
 import { getCategoryBySlug } from "@/lib/firebase/categories";
-import ProductCard from "@/components/ProductCard";
 import AnimatedSection from "@/components/AnimatedSection";
 import LazyProductVideo, {
   VideoThumbnailPlaceholder,
@@ -51,7 +49,6 @@ export default function ProductDetailPage() {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFoundState, setNotFoundState] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -96,24 +93,6 @@ export default function ProductDetailPage() {
           } catch (error) {
             console.warn("Error loading category:", error);
           }
-        }
-
-        // Cargar productos relacionados (misma categoría, excluyendo el actual)
-        try {
-          const related = await getProductsByCategory(productData.category);
-          const filtered = related
-            .filter((p) => p.id !== productId)
-            .slice(0, 4);
-          setRelatedProducts(filtered);
-        } catch (error) {
-          console.warn("Error loading related products:", error);
-          // Fallback a mock data
-          const mockRelated = mockProducts
-            .filter(
-              (p) => p.category === productData.category && p.id !== productId
-            )
-            .slice(0, 4);
-          setRelatedProducts(mockRelated);
         }
       } catch (error) {
         console.error("Error loading product:", error);
@@ -746,36 +725,6 @@ export default function ProductDetailPage() {
             </div>
           </AnimatedSection>
         </div>
-
-        {/* Productos relacionados */}
-        {relatedProducts.length > 0 && (
-          <AnimatedSection delay={0.2} className="mt-16">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                  Productos relacionados
-                </h2>
-                {category && categoryBrowseHref && (
-                  <Link
-                    href={categoryBrowseHref}
-                    className="text-[#6B5BB6] hover:text-[#5B4BA5] font-medium flex items-center gap-2 transition-colors"
-                  >
-                    Ver todos
-                    <ArrowLeft className="h-4 w-4 rotate-180" />
-                  </Link>
-                )}
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {relatedProducts.map((relatedProduct) => (
-                  <ProductCard
-                    key={relatedProduct.id}
-                    product={relatedProduct}
-                  />
-                ))}
-              </div>
-            </div>
-          </AnimatedSection>
-        )}
       </div>
     </div>
   );
