@@ -20,7 +20,6 @@ import {
 import { useCartStore } from "@/store/cartStore";
 import { getProductById } from "@/lib/firebase/products";
 import { getCategoryBySlug } from "@/lib/firebase/categories";
-import AnimatedSection from "@/components/AnimatedSection";
 import LazyProductVideo, {
   VideoThumbnailPlaceholder,
   prefetchProductVideo,
@@ -50,10 +49,11 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [notFoundState, setNotFoundState] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(true);
   const [addedToCart, setAddedToCart] = useState(false);
   const [purchaseSelection, setPurchaseSelection] = useState<
     Record<string, string>
@@ -61,22 +61,46 @@ export default function ProductDetailPage() {
   const [purchaseSelectionError, setPurchaseSelectionError] = useState<
     string | null
   >(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   const addItem = useCartStore((state) => state.addItem);
   const totalItems = useCartStore((state) => state.getTotalItems());
 
   useEffect(() => {
+    let cancelled = false;
+
+    const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> =>
+      new Promise((resolve, reject) => {
+        const timer = setTimeout(
+          () => reject(new Error("timeout")),
+          ms
+        );
+        promise
+          .then((value) => {
+            clearTimeout(timer);
+            resolve(value);
+          })
+          .catch((err) => {
+            clearTimeout(timer);
+            reject(err);
+          });
+      });
+
     const loadProduct = async () => {
       try {
         setLoading(true);
+        setLoadError(null);
+        setNotFoundState(false);
+        setProduct(null);
+        setSelectedImageIndex(0);
 
-        // Intentar obtener producto desde Firebase
-        let productData = await getProductById(productId);
+        let productData = await withTimeout(getProductById(productId), 15000);
 
-        // Si no existe en Firebase, buscar en mock data
         if (!productData) {
           productData = mockProducts.find((p) => p.id === productId) || null;
         }
+
+        if (cancelled) return;
 
         if (!productData) {
           setNotFoundState(true);
@@ -84,28 +108,43 @@ export default function ProductDetailPage() {
         }
 
         setProduct(productData);
+        const firstImageIdx = (productData.images || []).findIndex(
+          (img) => img.mediaType !== "video"
+        );
+        setSelectedImageIndex(firstImageIdx >= 0 ? firstImageIdx : 0);
 
-        // Cargar categoría
         if (productData.category) {
           try {
-            const categoryData = await getCategoryBySlug(productData.category);
-            setCategory(categoryData);
+            const categoryData = await withTimeout(
+              getCategoryBySlug(productData.category),
+              8000
+            );
+            if (!cancelled) setCategory(categoryData);
           } catch (error) {
             console.warn("Error loading category:", error);
           }
         }
       } catch (error) {
         console.error("Error loading product:", error);
-        setNotFoundState(true);
+        if (cancelled) return;
+        const message =
+          error instanceof Error && error.message === "timeout"
+            ? "La carga tardó demasiado. Revisa tu conexión e inténtalo de nuevo."
+            : "No se pudo cargar el producto. Revisa tu conexión e inténtalo de nuevo.";
+        setLoadError(message);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     if (productId) {
       loadProduct();
     }
-  }, [productId]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [productId, reloadToken]);
 
   useEffect(() => {
     if (!product) return;
@@ -232,6 +271,37 @@ export default function ProductDetailPage() {
               <div className="h-24 bg-gray-200 rounded w-full" />
             </div>
           </div>
+          <p className="mt-8 text-center text-sm text-gray-500">
+            Cargando producto…
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="max-w-md w-full rounded-xl bg-white border border-gray-200 p-8 text-center shadow-sm">
+          <h1 className="text-xl font-bold text-gray-900 mb-2">
+            No se pudo cargar el producto
+          </h1>
+          <p className="text-gray-600 mb-6">{loadError}</p>
+          <button
+            type="button"
+            onClick={() => setReloadToken((n) => n + 1)}
+            className="inline-flex items-center justify-center rounded-lg bg-[#6B5BB6] px-6 py-3 font-medium text-white hover:bg-[#5B4BA5]"
+          >
+            Reintentar
+          </button>
+          <div className="mt-4">
+            <Link
+              href="/tienda-online"
+              className="text-sm text-[#6B5BB6] hover:underline"
+            >
+              Volver a la tienda
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -290,7 +360,7 @@ export default function ProductDetailPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Galería de imágenes */}
-          <AnimatedSection className="space-y-4">
+          <div className="space-y-4">
             {/* Imagen principal */}
             <div className="relative aspect-square bg-white rounded-lg overflow-hidden shadow-lg">
               {product.images.length > 0 ? (
@@ -417,10 +487,10 @@ export default function ProductDetailPage() {
                 ))}
               </div>
             )}
-          </AnimatedSection>
+          </div>
 
           {/* Información del producto */}
-          <AnimatedSection delay={0.1}>
+          <div>
             <div className="space-y-6">
               {/* Título y categoría */}
               <div>
@@ -723,7 +793,7 @@ export default function ProductDetailPage() {
 
               {/* Tags ocultas en UI: se mantienen para SEO interno */}
             </div>
-          </AnimatedSection>
+          </div>
         </div>
       </div>
     </div>

@@ -21,6 +21,8 @@ export function getSentryBaseOptions() {
     // Ruido de apps (Instagram/Facebook in-app browser) y cortes de red puntuales
     ignoreErrors: [
       /webkit\.messageHandlers/i,
+      /Java object is gone/i,
+      /postMessage/i,
       "Failed to get document because the client is offline",
       /Could not reach Cloud Firestore backend/i,
     ],
